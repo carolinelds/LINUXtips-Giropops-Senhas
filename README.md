@@ -5,7 +5,7 @@
 Redis as a container, as required:
 
 ```
-docker run --name redis -p 6379:6379 -d redis:alpine
+docker container run --name redis -p 6379:6379 -d redis:alpine
 ```
 
 Save redis IP in variable:
@@ -17,7 +17,7 @@ export "REDIS_HOST=$(docker container inspect redis | jq -r '.[0].NetworkSetting
 Build app image:
 
 ```
-docker build -t carolinelds/linuxtips-giropops-senhas:1.0 --build-arg="REDIS_HOST=$REDIS_HOST" .
+docker image build -t carolinelds/linuxtips-giropops-senhas:1.0 --build-arg="REDIS_HOST=$REDIS_HOST" .
 ```
 
 Run app container:
