@@ -1,0 +1,36 @@
+FROM cgr.dev/chainguard/python:latest-dev as builder
+
+WORKDIR /app
+
+COPY app.py requirements.txt ./
+COPY static static/
+COPY templates templates/
+
+RUN pip install -r requirements.txt --user
+
+ARG BUSYBOX_VERSION=1.31.0-i686-uclibc
+ADD https://busybox.net/downloads/binaries/$BUSYBOX_VERSION/busybox_WGET /wget
+
+
+FROM cgr.dev/chainguard/python:latest
+
+ARG REDIS_HOST
+
+WORKDIR /app
+
+COPY --from=builder /app /app
+COPY --from=builder /home/nonroot/.local/lib/python3.12/site-packages /home/nonroot/.local/lib/python3.12/site-packages
+COPY --from=builder --chmod=555 /wget /usr/bin/wget
+
+ENV PYTHONPATH=/home/nonroot/.local/lib/python3.12/site-packages
+ENV FLASK_APP=/app/app.py
+ENV REDIS_HOST=$REDIS_HOST
+
+EXPOSE 5000
+
+ENTRYPOINT ["python"]
+
+CMD ["-m", "flask", "run", "--host=0.0.0.0"]
+
+HEALTHCHECK --interval=10s --timeout=1s \
+    CMD ["/usr/bin/wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000"] || exit 1
